@@ -1,3 +1,4 @@
+import NearbyCraftsSection from '../components/NearbyCraftsSection';
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
@@ -312,6 +313,12 @@ export default function DestinationDetailPage() {
             ))}
           </div>
         </div>
+
+                {/* NEARBY CRAFTS & ARTISAN SHOPPING DISCOVERY */}
+        <NearbyCraftsSection
+          district={destination.district || destination.city}
+          destinationName={destination.site_name}
+        />
 
         <div className="bg-slate-900 text-slate-300 rounded-2xl p-6 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
           <div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Compass, Search, ShieldCheck, MapPin, Menu, X, Sparkles } from 'lucide-react';
+import { Compass, Search, ShieldCheck, Shield, MapPin, Menu, X, Sparkles } from 'lucide-react';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -61,6 +61,9 @@ export default function Navbar() {
             </Link>
             <Link to="/itinerary" className="text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" /> Smart Itinerary Planner
+            </Link>
+            <Link to="/authority" className="text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-rose-600" /> Authority Command
             </Link>
             <Link to="/about" className="hover:text-amber-600 transition-colors flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-600" /> Data Provenance

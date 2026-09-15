@@ -34,6 +34,7 @@ export default function Footer() {
               <li><Link to="/explore" className="hover:text-amber-400 transition-colors">Destinations Directory (113 Sites)</Link></li>
               <li><Link to="/itinerary" className="hover:text-amber-400 transition-colors text-amber-300 font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> Smart Itinerary Planner</Link></li>
               <li><Link to="/explore?crowd=LOW" className="hover:text-amber-400 transition-colors">Live Off-Peak Attractions</Link></li>
+              <li><Link to="/authority" className="hover:text-amber-400 text-amber-300 font-semibold transition-colors">★ Authority Command Center</Link></li>
               <li><Link to="/about" className="hover:text-amber-400 transition-colors">Data Provenance & Governance</Link></li>
             </ul>
           </div>

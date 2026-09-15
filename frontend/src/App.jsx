@@ -8,6 +8,7 @@ import SearchResultsPage from './pages/SearchResultsPage';
 import DestinationDetailPage from './pages/DestinationDetailPage';
 import ItineraryPlannerPage from './pages/ItineraryPlannerPage';
 import AboutPage from './pages/AboutPage';
+import AuthorityCommandCenter from './pages/AuthorityCommandCenter';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/destination/:siteId" element={<DestinationDetailPage />} />
           <Route path="/itinerary" element={<ItineraryPlannerPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/authority" element={<AuthorityCommandCenter />} />
         </Routes>
       </main>
       <Footer />
