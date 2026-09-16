@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css'; // ⬅️ FIX #1: yehi missing tha, isse tiles/markers properly render hote hain
 
 export default function SatelliteMapView({ destinations, selectedSiteId, onSelectSite, mapFilter, mapLayer, setMapLayer }) {
   const mapContainerRef = useRef(null);
@@ -46,10 +47,27 @@ export default function SatelliteMapView({ destinations, selectedSiteId, onSelec
 
       mapInstanceRef.current = map;
       mapInstanceRef.current._currentTileLayer = tile;
+
+      // ⬅️ FIX #2: container ka size initial render ke waqt 0 ho sakta hai
+      // (flex/grid layouts me common issue) — thoda delay dekar Leaflet ko
+      // batana padta hai "ab dubara size naap lo"
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+
+      // Extra safety: agar parent container resize ho (sidebar open/close, tab switch, etc.)
+      const resizeObserver = new ResizeObserver(() => {
+        map.invalidateSize();
+      });
+      resizeObserver.observe(mapContainerRef.current);
+      mapInstanceRef.current._resizeObserver = resizeObserver;
     }
 
     return () => {
       if (mapInstanceRef.current) {
+        if (mapInstanceRef.current._resizeObserver) {
+          mapInstanceRef.current._resizeObserver.disconnect();
+        }
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
@@ -161,21 +179,22 @@ export default function SatelliteMapView({ destinations, selectedSiteId, onSelec
 
       const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
 
+      // ⬅️ FIX #3: click hote hi exact lat/lng pe tight zoom-in (14 kar diya, pehle 12 tha)
       marker.on('click', () => {
         onSelectSite(dest.site_id);
-        map.flyTo([lat, lng], 12, { duration: 1.2 });
+        map.flyTo([lat, lng], 14, { duration: 1.2 });
       });
 
       markersRef.current.push(marker);
     });
   }, [destinations, selectedSiteId, mapFilter]);
 
-  // Fly to selected site if changed externally
+  // Fly to selected site if changed externally (e.g. from a sidebar list click)
   useEffect(() => {
     if (!mapInstanceRef.current || !destinations || !selectedSiteId) return;
     const site = destinations.find(d => d.site_id === selectedSiteId);
     if (site && site.latitude && site.longitude) {
-      mapInstanceRef.current.flyTo([site.latitude, site.longitude], 12, { duration: 1.2 });
+      mapInstanceRef.current.flyTo([site.latitude, site.longitude], 14, { duration: 1.2 });
     }
   }, [selectedSiteId]);
 

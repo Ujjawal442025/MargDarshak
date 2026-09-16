@@ -1,345 +1,249 @@
-// Authority Command Center Mock Intelligence & Telemetry Engine
-// Compliant with SIH26204 Problem Statement & Rajasthan Tourism Baseline Data
+// Authority Command Centre — Real Data Derivation Layer
+// -------------------------------------------------------
+// IMPORTANT: This file contains NO fabricated sites, incidents, or telemetry.
+// Everything here is either read directly from `src/data/destinations.js`
+// (the same real, government-sourced dataset used across the citizen-facing
+// app) or transparently computed from it. Where the underlying data does not
+// exist (e.g. live personnel/resource counts), functions return `null` /
+// `available: false` rather than inventing a number, consistent with the
+// project's own data policy ("null means unavailable").
 
-export const authorityKPIs = {
-  totalDestinations: 113,
-  highCrowdCount: 8,
-  criticalCrowdCount: 3,
-  activeEventsCount: 12,
-  activeIncidentsCount: 6,
-  systemStatus: "OPERATIONAL"
-};
+import { getNearbyAndAlternatives } from '../utils/crowdEngine';
 
-export const initialIncidents = [
-  {
-    id: "INC-101",
-    severity: "CRITICAL",
-    siteId: "RJ_AMBER_FORT",
-    siteName: "Amber Fort",
-    location: "Gate 1 / Suraj Pol, Jaipur",
-    time: "4 mins ago",
-    title: "Projected Crowd Threshold Breach",
-    description: "Inflow exceeds entry turnstile capacity by +16 people/min. Parking zone B at 94% occupancy.",
-    riskIndicators: {
-      crowdDensity: "HIGH",
-      flowStability: "LOW",
-      queuePressure: "CRITICAL"
-    },
-    suggestedAction: "Redirect incoming bus arrivals toward Gate 2 and mobilize 3 perimeter crowd marshals."
-  },
-  {
-    id: "INC-102",
-    severity: "HIGH",
-    siteId: "RJ_JAIPUR_OLD_CITY",
-    siteName: "Jaipur Old City",
-    location: "Badi Chaupar to Hawa Mahal Corridor",
-    time: "12 mins ago",
-    title: "Traffic Gridlock & Tourist Transit Surge",
-    description: "Vehicle speeds reduced to 6 km/h. E-rickshaw bottleneck causing tourist pedestrian spillover.",
-    riskIndicators: {
-      crowdDensity: "HIGH",
-      flowStability: "MEDIUM",
-      queuePressure: "HIGH"
-    },
-    suggestedAction: "Deploy 4 traffic wardens at Ajmeri Gate intersection and activate temporary pedestrian-only zone."
-  },
-  {
-    id: "INC-103",
-    severity: "CRITICAL",
-    siteId: "RJ_KHATU_SHYAM",
-    siteName: "Khatu Shyam",
-    location: "Darshan Holding Area 2, Sikar",
-    time: "18 mins ago",
-    title: "High Pilgrim Holding Queue",
-    description: "Holding barricade queue length reaching 1,840 pilgrims. Wait time approaching 45 minutes.",
-    riskIndicators: {
-      crowdDensity: "CRITICAL",
-      flowStability: "LOW",
-      queuePressure: "CRITICAL"
-    },
-    suggestedAction: "Open parallel holding channel C and distribute water sachets at outer security perimeter."
-  },
-  {
-    id: "INC-104",
-    severity: "MODERATE",
-    siteId: "RJ_JAISALMER_FORT",
-    siteName: "Jaisalmer Fort",
-    location: "Gopa Chowk Ramp Entrance",
-    time: "26 mins ago",
-    title: "Narrow Ramp Inflow Surge",
-    description: "Bicycle and tourist convergence on living fort ascent. Minor slowing of pedestrian clearance.",
-    riskIndicators: {
-      crowdDensity: "MODERATE",
-      flowStability: "MEDIUM",
-      queuePressure: "MODERATE"
-    },
-    suggestedAction: "Restrict vehicular loading and post 2 wardens at entrance ramp choke point."
-  },
-  {
-    id: "INC-105",
-    severity: "HIGH",
-    siteId: "RJ_PUSHKAR",
-    siteName: "Pushkar Lake Ghats",
-    location: "Brahma Ghat & Varaha Ghat",
-    time: "34 mins ago",
-    title: "Fair Influx & Evening Aarti Congestion",
-    description: "Tourist and pilgrim influx converging on lake stairs. Local accommodation reaching 96% occupancy.",
-    riskIndicators: {
-      crowdDensity: "HIGH",
-      flowStability: "MEDIUM",
-      queuePressure: "HIGH"
-    },
-    suggestedAction: "Institute one-way pedestrian circulation between Brahma Temple and Brahma Ghat."
-  },
-  {
-    id: "INC-106",
-    severity: "MODERATE",
-    siteId: "RJ_CITY_PALACE_UDAIPUR",
-    siteName: "City Palace Udaipur",
-    location: "Badi Pol Courtyard Ticket Line",
-    time: "41 mins ago",
-    title: "Ticket Counter Queue Spurt",
-    description: "Wait time surged to 28 mins due to 3 chartered tour buses arriving simultaneously.",
-    riskIndicators: {
-      crowdDensity: "MODERATE",
-      flowStability: "HIGH",
-      queuePressure: "MODERATE"
-    },
-    suggestedAction: "Direct group tour guides to automated QR scan counter 3."
+/**
+ * Find the hourly_crowd_data index closest to the current wall-clock hour.
+ * Falls back to the index whose estimated_visitors is closest to the site's
+ * current_visitor_count when the clock falls outside the recorded window.
+ */
+function getCurrentHourIndex(dest) {
+  const hourly = dest.hourly_crowd_data || [];
+  if (hourly.length === 0) return -1;
+
+  const now = new Date();
+  const hour24 = now.getHours();
+
+  // hourly_crowd_data entries look like "08:00 AM", "01:00 PM" etc, in order.
+  const idx = hourly.findIndex(h => {
+    const [time, meridiem] = h.time.split(' ');
+    let [hh] = time.split(':').map(Number);
+    if (meridiem === 'PM' && hh !== 12) hh += 12;
+    if (meridiem === 'AM' && hh === 12) hh = 0;
+    return hh === hour24;
+  });
+
+  if (idx !== -1) return idx;
+
+  // Outside the recorded window (e.g. late night) — anchor on the closest
+  // recorded value to the site's own reported current_visitor_count instead
+  // of guessing.
+  const target = dest.crowd?.current_visitor_count;
+  if (target == null) return 0;
+  let bestIdx = 0;
+  let bestDiff = Infinity;
+  hourly.forEach((h, i) => {
+    const diff = Math.abs(h.estimated_visitors - target);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestIdx = i;
+    }
+  });
+  return bestIdx;
+}
+
+/**
+ * Derive inflow/outflow per minute from the real hourly_crowd_data curve
+ * (delta between consecutive recorded hours), instead of inventing numbers.
+ * This is clearly a *derived* estimate, not a live sensor feed.
+ */
+export function getFlowEstimate(dest) {
+  const hourly = dest.hourly_crowd_data || [];
+  if (hourly.length < 2) {
+    return { available: false, reason: 'Insufficient hourly data' };
   }
-];
+  const i = getCurrentHourIndex(dest);
+  const curr = hourly[i] ?? hourly[0];
+  const prevIdx = i > 0 ? i - 1 : 0;
+  const prev = hourly[prevIdx] ?? curr;
 
-export const mockDestinationTelemetry = {
-  RJ_AMBER_FORT: {
-    siteId: "RJ_AMBER_FORT",
-    siteName: "Amber Fort",
-    city: "Jaipur",
-    zone: "Gate 1 / Suraj Pol",
-    currentCrowdPct: 82,
-    trend: "RISING",
-    forecast15m: 87,
-    forecast30m: 94,
-    forecast45m: 96,
-    forecast60m: 91,
-    status: "HIGH",
-    confidence: "87%",
-    flow: {
-      peopleCurrently: 642,
-      enteringPerMin: 34,
-      leavingPerMin: 18,
-      netAccumulationPerMin: 16,
-      density: "HIGH",
-      queueLength: 71,
-      estimatedWaitMin: 24,
-      capacityUtilization: 82
-    },
-    factors: [
-      { name: "Entry Rate Surge", score: 88, status: "Critical" },
-      { name: "Parking Saturation (Zone B)", score: 94, status: "Near Full" },
-      { name: "Charter Bus Arrival Convoys", score: 80, status: "Active" },
-      { name: "Weather Comfort", score: 76, status: "Pleasant (High Demand)" }
-    ],
-    resources: {
-      current: { security: 12, traffic: 4, medical: 2 },
-      recommended: { security: 15, traffic: 7, medical: 3 },
-      donorSite: "Jaigarh Fort",
-      donorSiteChanges: { security: "8 → 6", traffic: "3 → 2" },
-      reason: "Predicted threshold breach in 22 minutes at Suraj Pol."
-    },
-    simulation: {
-      gate1Closed: {
-        gate2Crowd: { current: 61, simulated: 84 },
-        mainQueue: { current: 71, simulated: 103 },
-        waitTimeMin: { current: 24, simulated: 39 },
-        roadCongestion: { current: "Medium", simulated: "High" },
-        medicalDemand: { current: 2, simulated: 3 }
-      }
-    }
-  },
-  RJ_CITY_PALACE_UDAIPUR: {
-    siteId: "RJ_CITY_PALACE_UDAIPUR",
-    siteName: "City Palace Udaipur",
-    city: "Udaipur",
-    zone: "Badi Pol Ticket Courtyard",
-    currentCrowdPct: 81,
-    trend: "RISING",
-    forecast15m: 85,
-    forecast30m: 91,
-    forecast45m: 89,
-    forecast60m: 80,
-    status: "HIGH",
-    confidence: "89%",
-    flow: {
-      peopleCurrently: 512,
-      enteringPerMin: 28,
-      leavingPerMin: 15,
-      netAccumulationPerMin: 13,
-      density: "HIGH",
-      queueLength: 54,
-      estimatedWaitMin: 19,
-      capacityUtilization: 81
-    },
-    factors: [
-      { name: "Lakeside Ghat Influx", score: 85, status: "High" },
-      { name: "Boat Jetty Queue Spillover", score: 78, status: "Moderate" },
-      { name: "Wedding Heritage Season", score: 75, status: "Active" },
-      { name: "Comfort Index", score: 82, status: "Favorable" }
-    ],
-    resources: {
-      current: { security: 10, traffic: 3, medical: 2 },
-      recommended: { security: 13, traffic: 5, medical: 2 },
-      donorSite: "Fateh Sagar Lake",
-      donorSiteChanges: { security: "6 → 4", traffic: "3 → 2" },
-      reason: "Badi Pol queue building up prior to midday museum surge."
-    },
-    simulation: {
-      gate1Closed: {
-        gate2Crowd: { current: 55, simulated: 79 },
-        mainQueue: { current: 54, simulated: 86 },
-        waitTimeMin: { current: 19, simulated: 31 },
-        roadCongestion: { current: "Medium", simulated: "High" },
-        medicalDemand: { current: 2, simulated: 2 }
-      }
-    }
-  },
-  RJ_KHATU_SHYAM: {
-    siteId: "RJ_KHATU_SHYAM",
-    siteName: "Khatu Shyam",
-    city: "Sikar",
-    zone: "Toran Dwar & Holding Queue",
-    currentCrowdPct: 92,
-    trend: "CRITICAL",
-    forecast15m: 96,
-    forecast30m: 98,
-    forecast45m: 95,
-    forecast60m: 88,
-    status: "CRITICAL",
-    confidence: "93%",
-    flow: {
-      peopleCurrently: 1840,
-      enteringPerMin: 85,
-      leavingPerMin: 42,
-      netAccumulationPerMin: 43,
-      density: "CRITICAL",
-      queueLength: 195,
-      estimatedWaitMin: 45,
-      capacityUtilization: 92
-    },
-    factors: [
-      { name: "Ekadashi / Weekend Darshan", score: 98, status: "Maximum" },
-      { name: "Highway Toll Congestion", score: 89, status: "High Inflow" },
-      { name: "Foot Pilgrim Processions", score: 82, status: "Heavy" },
-      { name: "Aarti Peak Window", score: 94, status: "Imminent" }
-    ],
-    resources: {
-      current: { security: 24, traffic: 12, medical: 6 },
-      recommended: { security: 32, traffic: 18, medical: 9 },
-      donorSite: "Jeenmata Temple",
-      donorSiteChanges: { security: "10 → 6", traffic: "6 → 3" },
-      reason: "Holding area capacity exceeded; pilgrim queue extending to outer loop."
-    },
-    simulation: {
-      gate1Closed: {
-        gate2Crowd: { current: 85, simulated: 99 },
-        mainQueue: { current: 195, simulated: 290 },
-        waitTimeMin: { current: 45, simulated: 75 },
-        roadCongestion: { current: "High", simulated: "Severe Gridlock" },
-        medicalDemand: { current: 6, simulated: 12 }
-      }
-    }
-  },
-  RJ_MEHRANGARH_FORT: {
-    siteId: "RJ_MEHRANGARH_FORT",
-    siteName: "Mehrangarh Fort",
-    city: "Jodhpur",
-    zone: "Fateh Pol & Jai Pol Ramp",
-    currentCrowdPct: 68,
-    trend: "MODERATE",
-    forecast15m: 74,
-    forecast30m: 79,
-    forecast45m: 76,
-    forecast60m: 65,
-    status: "MODERATE",
-    confidence: "88%",
-    flow: {
-      peopleCurrently: 380,
-      enteringPerMin: 22,
-      leavingPerMin: 16,
-      netAccumulationPerMin: 6,
-      density: "MODERATE",
-      queueLength: 28,
-      estimatedWaitMin: 11,
-      capacityUtilization: 68
-    },
-    factors: [
-      { name: "Elevator Lift Throughput", score: 72, status: "Normal" },
-      { name: "Ramp Ascent Flow", score: 65, status: "Steady" },
-      { name: "Weather Comfort", score: 74, status: "Pleasant" }
-    ],
-    resources: {
-      current: { security: 10, traffic: 4, medical: 2 },
-      recommended: { security: 10, traffic: 4, medical: 2 },
-      donorSite: "Umaid Bhawan Palace",
-      donorSiteChanges: { security: "Stable", traffic: "Stable" },
-      reason: "Balanced operations under optimal capacity thresholds."
-    },
-    simulation: {
-      gate1Closed: {
-        gate2Crowd: { current: 48, simulated: 67 },
-        mainQueue: { current: 28, simulated: 49 },
-        waitTimeMin: { current: 11, simulated: 21 },
-        roadCongestion: { current: "Low", simulated: "Moderate" },
-        medicalDemand: { current: 2, simulated: 2 }
-      }
-    }
-  },
-  RJ_JAISALMER_FORT: {
-    siteId: "RJ_JAISALMER_FORT",
-    siteName: "Jaisalmer Fort",
-    city: "Jaisalmer",
-    zone: "Gopa Chowk Gateway",
-    currentCrowdPct: 87,
-    trend: "RISING",
-    forecast15m: 90,
-    forecast30m: 93,
-    forecast45m: 88,
-    forecast60m: 76,
-    status: "HIGH",
-    confidence: "91%",
-    flow: {
-      peopleCurrently: 710,
-      enteringPerMin: 36,
-      leavingPerMin: 21,
-      netAccumulationPerMin: 15,
-      density: "HIGH",
-      queueLength: 64,
-      estimatedWaitMin: 22,
-      capacityUtilization: 87
-    },
-    factors: [
-      { name: "Living Fort Residential Influx", score: 88, status: "High" },
-      { name: "Sunset Viewpoint Transit", score: 92, status: "Surging" },
-      { name: "Heritage Bazaar Density", score: 86, status: "Congested" }
-    ],
-    resources: {
-      current: { security: 8, traffic: 3, medical: 2 },
-      recommended: { security: 12, traffic: 5, medical: 3 },
-      donorSite: "Desert National Park",
-      donorSiteChanges: { security: "6 → 4", traffic: "3 → 2" },
-      reason: "Ascent ramp bottleneck approaching maximum pedestrian load."
-    },
-    simulation: {
-      gate1Closed: {
-        gate2Crowd: { current: 70, simulated: 91 },
-        mainQueue: { current: 64, simulated: 110 },
-        waitTimeMin: { current: 22, simulated: 42 },
-        roadCongestion: { current: "Medium", simulated: "High" },
-        medicalDemand: { current: 2, simulated: 4 }
-      }
-    }
+  const deltaFromPrev = curr.estimated_visitors - prev.estimated_visitors;
+  const grossFlowPerMin = Math.round(Math.abs(deltaFromPrev) / 60) || Math.round(curr.estimated_visitors / 600);
+  const netPerMin = Math.round(deltaFromPrev / 60);
+
+  return {
+    available: true,
+    hourLabel: curr.time,
+    netAccumulationPerMin: netPerMin,
+    approxInflowPerMin: Math.max(grossFlowPerMin, Math.abs(netPerMin)),
+    approxOutflowPerMin: Math.max(grossFlowPerMin - netPerMin, 0),
+    basis: "Derived from the hourly visitor pattern already in the dataset (delta between recorded hours), not a live sensor feed."
+  };
+}
+
+/**
+ * Build a NOW / +15m / +30m / +45m / +60m / +75m projection strictly by
+ * interpolating the site's own recorded hourly_crowd_data curve — i.e.
+ * reading quarter-hour points along data that already exists, rather than
+ * multiplying the current number by a made-up growth factor.
+ */
+export function getPredictiveSeries(dest) {
+  const hourly = dest.hourly_crowd_data || [];
+  if (hourly.length < 2) return [];
+
+  const i = getCurrentHourIndex(dest);
+  const curr = hourly[i] ?? hourly[0];
+  const nextIdx = Math.min(i + 1, hourly.length - 1);
+  const next = hourly[nextIdx] ?? curr;
+  const nextNextIdx = Math.min(i + 2, hourly.length - 1);
+  const nextNext = hourly[nextNextIdx] ?? next;
+
+  const interp = (a, b, t) => Math.round(a + (b - a) * t);
+
+  return [
+    { interval: 'Now', load: curr.crowd_percentage, visitors: curr.estimated_visitors },
+    { interval: '+15m', load: interp(curr.crowd_percentage, next.crowd_percentage, 0.25), visitors: interp(curr.estimated_visitors, next.estimated_visitors, 0.25) },
+    { interval: '+30m', load: interp(curr.crowd_percentage, next.crowd_percentage, 0.5), visitors: interp(curr.estimated_visitors, next.estimated_visitors, 0.5) },
+    { interval: '+45m', load: interp(curr.crowd_percentage, next.crowd_percentage, 0.75), visitors: interp(curr.estimated_visitors, next.estimated_visitors, 0.75) },
+    { interval: '+60m', load: next.crowd_percentage, visitors: next.estimated_visitors },
+    { interval: '+75m', load: interp(next.crowd_percentage, nextNext.crowd_percentage, 0.25), visitors: interp(next.estimated_visitors, nextNext.estimated_visitors, 0.25) },
+  ];
+}
+
+/**
+ * "Active Alerts" — replaces fabricated incident narratives. An alert is
+ * simply any monitored site whose ACTUAL recorded crowd level/capacity in
+ * the dataset has crossed HIGH/CRITICAL thresholds. Nothing here is
+ * invented (no fake gate names, no fake queue counts) — every field quoted
+ * comes straight from that site's own record.
+ */
+export function getActiveAlerts(destinations) {
+  return destinations
+    .filter(d => {
+      const lvl = d.crowd?.current_crowd_level;
+      const cap = d.crowd?.current_capacity_utilization || 0;
+      return lvl === 'CRITICAL' || lvl === 'HIGH' || cap >= 75;
+    })
+    .map(d => {
+      const severity = (d.crowd?.current_crowd_level === 'CRITICAL' || d.crowd?.current_capacity_utilization >= 88)
+        ? 'CRITICAL' : 'HIGH';
+      return {
+        id: `ALERT-${d.site_id}`,
+        siteId: d.site_id,
+        siteName: d.site_name,
+        city: d.city,
+        severity,
+        capacityPct: d.crowd?.current_capacity_utilization,
+        crowdLevel: d.crowd?.current_crowd_level,
+        trend: d.crowd?.crowd_trend,
+        estimatedWait: d.crowd?.estimated_wait_time,
+        peakHours: d.crowd?.peak_hours,
+        title: `${d.crowd?.current_crowd_level === 'CRITICAL' ? 'Critical' : 'High'} crowd density at ${d.site_name}`,
+        description: `${d.site_name} (${d.city}) is currently at ${d.crowd?.current_capacity_utilization}% capacity utilization, trend ${(d.crowd?.crowd_trend || '').toLowerCase()}. Estimated wait time ${d.crowd?.estimated_wait_time || 'unavailable'}. Peak hours: ${d.crowd?.peak_hours || 'unavailable'}.`
+      };
+    })
+    .sort((a, b) => (b.capacityPct || 0) - (a.capacityPct || 0));
+}
+
+/**
+ * Suggest a resource-reallocation DIRECTION using real proximity + real
+ * relative crowd pressure (via crowdEngine's getNearbyAndAlternatives).
+ * Deliberately does NOT invent personnel/vehicle counts — those fields do
+ * not exist anywhere in the dataset (the Authority live-feed schema marks
+ * them explicitly as null / "AWAITING_AUTHORISED_FEED"), so this stays
+ * qualitative and is clearly labeled as such.
+ */
+export function getDonorSiteSuggestion(dest, allDestinations) {
+  const { alternatives } = getNearbyAndAlternatives(dest, allDestinations, 90);
+  if (!alternatives || alternatives.length === 0) {
+    return { available: false, reason: 'No lower-pressure site found within range.' };
   }
-};
+  const donor = alternatives[0];
+  return {
+    available: true,
+    donorSiteName: donor.site_name,
+    donorCity: donor.city,
+    distanceKm: donor.distance_km,
+    donorCapacityPct: donor.crowd?.current_capacity_utilization,
+    targetCapacityPct: dest.crowd?.current_capacity_utilization,
+    note: "No live personnel/vehicle deployment feed is connected yet, so this shows a proximity + relative-pressure suggestion only, not fabricated headcounts."
+  };
+}
 
-export function getAuthoritySiteTelemetry(siteId) {
-  return mockDestinationTelemetry[siteId] || mockDestinationTelemetry["RJ_AMBER_FORT"];
+/**
+ * What-if simulation: transparent, formula-based projection off the site's
+ * REAL current capacity/visitor numbers — not a canned static screenshot,
+ * and not random. Every scenario documents its own assumption.
+ */
+export function simulateScenario(dest, scenarioKey) {
+  const baseCapacityPct = dest.crowd?.current_capacity_utilization ?? 50;
+  const baseVisitors = dest.crowd?.current_visitor_count ?? 0;
+  const dailyCap = dest.crowd?.total_daily_capacity ?? Math.round(baseVisitors / (baseCapacityPct / 100 || 1));
+  const baseWaitText = dest.crowd?.estimated_wait_time || '';
+  const baseWaitMin = parseInt(String(baseWaitText).match(/\d+/)?.[0] || '0', 10);
+
+  const scenarios = {
+    none: {
+      label: 'No Action (baseline)',
+      capacityMultiplier: 1,
+      waitMultiplier: 1,
+      assumption: 'Current recorded conditions, no intervention applied.'
+    },
+    reroute_20: {
+      label: 'Reroute 20% of Inflow',
+      capacityMultiplier: 0.8,
+      waitMultiplier: 0.65,
+      assumption: 'Diverting an estimated 20% of new arrivals to an alternate entry/site reduces net accumulation proportionally.'
+    },
+    second_gate: {
+      label: 'Open Secondary Gate/Channel',
+      capacityMultiplier: 0.88,
+      waitMultiplier: 0.55,
+      assumption: 'A second processing channel roughly doubles throughput at the bottleneck, cutting queue-driven wait sharply while easing but not eliminating overall occupancy.'
+    },
+    gate_closure: {
+      label: 'Temporary Gate Closure (worst case)',
+      capacityMultiplier: 1.22,
+      waitMultiplier: 1.6,
+      assumption: 'Closing an entry point concentrates the same real inflow onto fewer channels, increasing pressure and wait time at the remaining ones.'
+    }
+  };
+
+  const s = scenarios[scenarioKey] || scenarios.none;
+  const projectedCapacityPct = Math.max(5, Math.min(100, Math.round(baseCapacityPct * s.capacityMultiplier)));
+  const projectedVisitors = Math.round(dailyCap * (projectedCapacityPct / 100));
+  const projectedWaitMin = Math.max(0, Math.round(baseWaitMin * s.waitMultiplier));
+
+  return {
+    scenarioKey: scenarioKey || 'none',
+    label: s.label,
+    assumption: s.assumption,
+    before: { capacityPct: baseCapacityPct, visitors: baseVisitors, waitMin: baseWaitMin || null },
+    after: { capacityPct: projectedCapacityPct, visitors: projectedVisitors, waitMin: baseWaitMin ? projectedWaitMin : null },
+    disclosure: "Simulated planning estimate calculated from this site's real current capacity/visitor figures using a transparent multiplier — not a live sensor reading or a production ML forecast."
+  };
+}
+
+/**
+ * KPI roll-up across all monitored sites, entirely from real per-site
+ * fields already in the dataset (crowd level/capacity, festival_today).
+ */
+export function getStateKPIs(destinations) {
+  let critical = 0, high = 0, moderate = 0, low = 0, activeEvents = 0;
+  destinations.forEach(d => {
+    const cap = d.crowd?.current_capacity_utilization || 0;
+    const lvl = d.crowd?.current_crowd_level || 'MODERATE';
+    if (lvl === 'CRITICAL' || cap >= 88) critical++;
+    else if (lvl === 'HIGH' || cap >= 75) high++;
+    else if (lvl === 'MODERATE' || cap >= 50) moderate++;
+    else low++;
+    if (d.events?.festival_today) activeEvents++;
+  });
+  return {
+    total: destinations.length,
+    critical,
+    high,
+    moderate,
+    low,
+    activeEvents,
+    activeAlerts: critical + high
+  };
 }
