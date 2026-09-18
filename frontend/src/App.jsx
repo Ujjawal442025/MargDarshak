@@ -7,6 +7,8 @@ import ExplorePage from './pages/ExplorePage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import DestinationDetailPage from './pages/DestinationDetailPage';
 import ItineraryPlannerPage from './pages/ItineraryPlannerPage';
+import HotelsPage from './pages/HotelsPage';
+import FoodPage from './pages/FoodPage';
 import AboutPage from './pages/AboutPage';
 import AuthorityCommandCenter from './pages/AuthorityCommandCenter';
 import AuthorityLoginGate, { isAuthoritySessionActive } from './components/AuthorityLoginGate';
@@ -39,6 +41,8 @@ export default function App() {
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/destination/:siteId" element={<DestinationDetailPage />} />
           <Route path="/itinerary" element={<ItineraryPlannerPage />} />
+          <Route path="/hotels" element={<HotelsPage />} />
+          <Route path="/food" element={<FoodPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/authority" element={<ProtectedAuthorityRoute />} />
         </Routes>

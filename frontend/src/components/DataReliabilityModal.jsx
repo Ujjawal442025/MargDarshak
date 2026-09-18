@@ -1,5 +1,5 @@
-import React from 'react';
-import { ShieldCheck, Database, CheckCircle2, AlertCircle } from 'lucide-react';
+import React from "react";
+import { ShieldCheck, Database, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function DataReliabilityModal({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -13,8 +13,12 @@ export default function DataReliabilityModal({ isOpen, onClose }) {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="font-bold text-slate-900 text-lg">Data Provenance & Methodology</h2>
-              <p className="text-xs text-slate-500">SIH 2026 Architectural Compliance Statement</p>
+              <h2 className="font-bold text-slate-900 text-lg">
+                Data Provenance & Methodology
+              </h2>
+              <p className="text-xs text-slate-500">
+                SIH 2026 Architectural Compliance Statement
+              </p>
             </div>
           </div>
           <button
@@ -32,23 +36,39 @@ export default function DataReliabilityModal({ isOpen, onClose }) {
               Primary Source: Rajasthan Tourism Official Data 2024-25
             </h4>
             <p className="text-amber-950/90">
-              All tourist destinations, municipal district associations, classifications, entry tariffs, and baseline annual visitor counts are extracted directly from the Government of Rajasthan Tourism Department records.
+              All tourist destinations, municipal district associations,
+              classifications, entry tariffs, and baseline annual visitor counts
+              are extracted directly from the Government of Rajasthan Tourism
+              Department records.
             </p>
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-bold text-slate-900 text-sm">Transparency Protocol: Synthetic Prototype Telemetry</h4>
+            <h4 className="font-bold text-slate-900 text-sm">
+              Transparency Protocol: Synthetic Prototype Telemetry
+            </h4>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-slate-800">Hourly Profiles & Instant Load:</strong> Simulated prototype values calibrated to historical tourist surge patterns (8:00 AM – 8:00 PM). These values are deterministic for hackathon evaluation and clearly demarcated.
+                <strong className="text-slate-800">
+                  Hourly Profiles & Instant Load:
+                </strong>{" "}
+                Simulated prototype values calibrated to historical tourist
+                surge patterns (8:00 AM – 8:00 PM). These values are
+                deterministic for hackathon evaluation and clearly demarcated.
               </div>
             </div>
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-start gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-slate-800">Pluggable IoT / API Architecture:</strong> Designed with dedicated service hooks. State e-mitra ticketing gateways, automated turnstile sensors, or CCTV optical visitor counters can replace the synthetic data layer instantly via standard JSON endpoints.
+                <strong className="text-slate-800">
+                  Pluggable IoT / API Architecture:
+                </strong>{" "}
+                Designed with dedicated service hooks. State e-mitra ticketing
+                gateways, automated turnstile sensors, or CCTV optical visitor
+                counters can replace the synthetic data layer instantly via
+                standard JSON endpoints.
               </div>
             </div>
           </div>
