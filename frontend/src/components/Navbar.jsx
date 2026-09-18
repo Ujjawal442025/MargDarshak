@@ -1,37 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import {
-  Compass,
-  Search,
-  ShieldCheck,
-  Shield,
-  MapPin,
-  Menu,
-  X,
-  Sparkles,
-  ChevronRight,
-} from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Compass, Search, ShieldCheck, Shield, MapPin, Menu, X, Sparkles, ChevronRight } from 'lucide-react';
 
 const NAV_LINKS = [
-  { to: "/explore", label: "Explore 110+ Sites", icon: MapPin },
-  {
-    to: "/itinerary",
-    label: "Smart Itinerary Planner",
-    icon: Sparkles,
-    accent: "amber",
-  },
-  {
-    to: "/authority",
-    label: "Authority Command",
-    icon: Shield,
-    accent: "rose",
-  },
-  { to: "/about", label: "Data Provenance", icon: ShieldCheck },
+  { to: '/explore', label: 'Explore 110+ Sites', icon: MapPin },
+  { to: '/itinerary', label: 'Smart Itinerary Planner', icon: Sparkles, accent: 'amber' },
+  { to: '/authority', label: 'Authority Command', icon: Shield, accent: 'rose' },
+  { to: '/about', label: 'Data Provenance', icon: ShieldCheck },
 ];
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [quickSearch, setQuickSearch] = useState("");
+  const [quickSearch, setQuickSearch] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -43,9 +23,9 @@ export default function Navbar() {
 
   // Lock body scroll while the mobile drawer is open.
   useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, [mobileMenuOpen]);
 
@@ -53,7 +33,7 @@ export default function Navbar() {
     e.preventDefault();
     if (quickSearch.trim()) {
       navigate(`/search?q=${encodeURIComponent(quickSearch.trim())}`);
-      setQuickSearch("");
+      setQuickSearch('');
       setMobileMenuOpen(false);
     }
   };
@@ -82,18 +62,13 @@ export default function Navbar() {
                 <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
                   Rajasthan Pilot
                 </span>
-                <p className="text-[11px] font-medium text-slate-500 tracking-tight">
-                  Crowd-Aware Tourism Platform
-                </p>
+                <p className="text-[11px] font-medium text-slate-500 tracking-tight">Crowd-Aware Tourism Platform</p>
               </div>
             </div>
           </Link>
 
           {/* Quick Search on Navbar (Desktop) */}
-          <form
-            onSubmit={handleQuickSubmit}
-            className="hidden lg:flex items-center relative max-w-xs w-full"
-          >
+          <form onSubmit={handleQuickSubmit} className="hidden lg:flex items-center relative max-w-xs w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
             <input
               type="text"
@@ -109,9 +84,7 @@ export default function Navbar() {
             <Link
               to="/explore"
               className={`px-3 py-2 rounded-full transition-colors flex items-center gap-1.5 ${
-                isActive("/explore")
-                  ? "text-amber-700 bg-amber-50"
-                  : "hover:text-amber-600 hover:bg-slate-50"
+                isActive('/explore') ? 'text-amber-700 bg-amber-50' : 'hover:text-amber-600 hover:bg-slate-50'
               }`}
             >
               <MapPin className="w-4 h-4 text-amber-600" /> Explore
@@ -119,20 +92,19 @@ export default function Navbar() {
             <Link
               to="/itinerary"
               className={`px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1.5 ${
-                isActive("/itinerary")
-                  ? "text-amber-800 bg-amber-100 border-amber-300"
-                  : "text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200/80"
+                isActive('/itinerary')
+                  ? 'text-amber-800 bg-amber-100 border-amber-300'
+                  : 'text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200/80'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Itinerary
-              Planner
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Itinerary Planner
             </Link>
             <Link
               to="/authority"
               className={`px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1.5 ${
-                isActive("/authority")
-                  ? "text-rose-800 bg-rose-100 border-rose-300"
-                  : "text-rose-700 bg-rose-50 hover:bg-rose-100 border-rose-200/80"
+                isActive('/authority')
+                  ? 'text-rose-800 bg-rose-100 border-rose-300'
+                  : 'text-rose-700 bg-rose-50 hover:bg-rose-100 border-rose-200/80'
               }`}
             >
               <Shield className="w-3.5 h-3.5 text-rose-600" /> Authority Command
@@ -140,28 +112,21 @@ export default function Navbar() {
             <Link
               to="/about"
               className={`px-3 py-2 rounded-full transition-colors flex items-center gap-1.5 ${
-                isActive("/about")
-                  ? "text-emerald-700 bg-emerald-50"
-                  : "hover:text-amber-600 hover:bg-slate-50"
+                isActive('/about') ? 'text-emerald-700 bg-emerald-50' : 'hover:text-amber-600 hover:bg-slate-50'
               }`}
             >
-              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Data
-              Provenance
+              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Data Provenance
             </Link>
           </nav>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen((v) => !v)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
             className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
           >
-            {mobileMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
@@ -170,9 +135,7 @@ export default function Navbar() {
           are always listed here so nothing is desktop-only. */}
       <div
         className={`md:hidden overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out border-t border-slate-200 bg-white ${
-          mobileMenuOpen
-            ? "max-h-[520px] opacity-100"
-            : "max-h-0 opacity-0 border-t-0"
+          mobileMenuOpen ? 'max-h-[520px] opacity-100' : 'max-h-0 opacity-0 border-t-0'
         }`}
       >
         <div className="px-4 pt-4 pb-6 space-y-4">
@@ -191,23 +154,11 @@ export default function Navbar() {
             {NAV_LINKS.map(({ to, label, icon: Icon, accent }) => {
               const active = isActive(to);
               const palette =
-                accent === "amber"
-                  ? {
-                      base: "bg-amber-50 text-amber-900 border-amber-200",
-                      icon: "text-amber-600",
-                      activeBase: "bg-amber-100 border-amber-300",
-                    }
-                  : accent === "rose"
-                    ? {
-                        base: "bg-rose-50 text-rose-900 border-rose-200",
-                        icon: "text-rose-600",
-                        activeBase: "bg-rose-100 border-rose-300",
-                      }
-                    : {
-                        base: "bg-white text-slate-700 border-transparent",
-                        icon: "text-emerald-600",
-                        activeBase: "bg-slate-50 border-slate-200",
-                      };
+                accent === 'amber'
+                  ? { base: 'bg-amber-50 text-amber-900 border-amber-200', icon: 'text-amber-600', activeBase: 'bg-amber-100 border-amber-300' }
+                  : accent === 'rose'
+                    ? { base: 'bg-rose-50 text-rose-900 border-rose-200', icon: 'text-rose-600', activeBase: 'bg-rose-100 border-rose-300' }
+                    : { base: 'bg-white text-slate-700 border-transparent', icon: 'text-emerald-600', activeBase: 'bg-slate-50 border-slate-200' };
 
               return (
                 <Link
