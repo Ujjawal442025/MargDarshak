@@ -7,6 +7,7 @@ import ExplorePage from './pages/ExplorePage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import DestinationDetailPage from './pages/DestinationDetailPage';
 import ItineraryPlannerPage from './pages/ItineraryPlannerPage';
+import CraftDirectionsPage from './pages/CraftDirectionsPage';
 import HotelsPage from './pages/HotelsPage';
 import FoodPage from './pages/FoodPage';
 import AboutPage from './pages/AboutPage';
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/explore" element={<ExplorePage />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/destination/:siteId" element={<DestinationDetailPage />} />
+          <Route path="/directions/:siteId/:craftId" element={<CraftDirectionsPage />} />
           <Route path="/itinerary" element={<ItineraryPlannerPage />} />
           <Route path="/hotels" element={<HotelsPage />} />
           <Route path="/food" element={<FoodPage />} />

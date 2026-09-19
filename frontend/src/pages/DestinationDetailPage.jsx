@@ -22,6 +22,363 @@ import FacilityGrid from "../components/FacilityGrid";
 import DestinationCard from "../components/DestinationCard";
 import DataReliabilityModal from "../components/DataReliabilityModal";
 
+// Master database of real verified transport hubs across Rajasthan
+const MASTER_TRANSIT_HUBS = [
+  // Jaipur
+  {
+    id: "h_jp_rail",
+    name: "Jaipur Junction Railway Station",
+    type: "railway",
+    city: "Jaipur",
+    lat: 26.9196,
+    lon: 75.7878,
+  },
+  {
+    id: "h_jp_gandhi",
+    name: "Gandhinagar Jaipur Railway Station",
+    type: "railway",
+    city: "Jaipur",
+    lat: 26.8837,
+    lon: 75.8035,
+  },
+  {
+    id: "h_jp_air",
+    name: "Jaipur International Airport (JAI)",
+    type: "airport",
+    city: "Jaipur",
+    lat: 26.8242,
+    lon: 75.8122,
+  },
+  {
+    id: "h_jp_bus",
+    name: "Sindhi Camp Central Bus Stand",
+    type: "bus",
+    city: "Jaipur",
+    lat: 26.9231,
+    lon: 75.7981,
+  },
+
+  // Jodhpur
+  {
+    id: "h_jd_rail",
+    name: "Jodhpur Junction Railway Station",
+    type: "railway",
+    city: "Jodhpur",
+    lat: 26.2854,
+    lon: 73.0186,
+  },
+  {
+    id: "h_jd_air",
+    name: "Jodhpur Airport (JDH)",
+    type: "airport",
+    city: "Jodhpur",
+    lat: 26.2513,
+    lon: 73.0485,
+  },
+  {
+    id: "h_jd_bus",
+    name: "Jodhpur Central Bus Stand",
+    type: "bus",
+    city: "Jodhpur",
+    lat: 26.287,
+    lon: 73.015,
+  },
+
+  // Udaipur
+  {
+    id: "h_ud_rail",
+    name: "Udaipur City Railway Station",
+    type: "railway",
+    city: "Udaipur",
+    lat: 24.5734,
+    lon: 73.6983,
+  },
+  {
+    id: "h_ud_air",
+    name: "Maharana Pratap Airport (UDR)",
+    type: "airport",
+    city: "Udaipur",
+    lat: 24.6177,
+    lon: 73.8961,
+  },
+  {
+    id: "h_ud_bus",
+    name: "Udaipur Central Bus Stand",
+    type: "bus",
+    city: "Udaipur",
+    lat: 24.585,
+    lon: 73.692,
+  },
+
+  // Jaisalmer
+  {
+    id: "h_js_rail",
+    name: "Jaisalmer Junction Railway Station",
+    type: "railway",
+    city: "Jaisalmer",
+    lat: 26.915,
+    lon: 70.908,
+  },
+  {
+    id: "h_js_air",
+    name: "Jaisalmer Airport (JSA)",
+    type: "airport",
+    city: "Jaisalmer",
+    lat: 26.887,
+    lon: 70.875,
+  },
+  {
+    id: "h_js_bus",
+    name: "Jaisalmer Central Bus Stand",
+    type: "bus",
+    city: "Jaisalmer",
+    lat: 26.918,
+    lon: 70.91,
+  },
+
+  // Bikaner
+  {
+    id: "h_bk_rail",
+    name: "Bikaner Junction Railway Station",
+    type: "railway",
+    city: "Bikaner",
+    lat: 28.015,
+    lon: 73.311,
+  },
+  {
+    id: "h_bk_air",
+    name: "Nal Airport Bikaner",
+    type: "airport",
+    city: "Bikaner",
+    lat: 28.073,
+    lon: 73.513,
+  },
+  {
+    id: "h_bk_bus",
+    name: "Bikaner Central Bus Stand",
+    type: "bus",
+    city: "Bikaner",
+    lat: 28.018,
+    lon: 73.315,
+  },
+
+  // Ajmer & Pushkar
+  {
+    id: "h_aj_rail",
+    name: "Ajmer Junction Railway Station",
+    type: "railway",
+    city: "Ajmer",
+    lat: 26.4602,
+    lon: 74.6395,
+  },
+  {
+    id: "h_aj_air",
+    name: "Kishangarh Airport (KQH)",
+    type: "airport",
+    city: "Ajmer",
+    lat: 26.578,
+    lon: 74.902,
+  },
+  {
+    id: "h_ps_bus",
+    name: "Pushkar Marwar Bus Stand",
+    type: "bus",
+    city: "Pushkar",
+    lat: 26.4925,
+    lon: 74.5492,
+  },
+  {
+    id: "h_aj_bus",
+    name: "Ajmer Central Bus Stand",
+    type: "bus",
+    city: "Ajmer",
+    lat: 26.465,
+    lon: 74.64,
+  },
+
+  // Mount Abu & Abu Road
+  {
+    id: "h_abu_rail",
+    name: "Abu Road Railway Station",
+    type: "railway",
+    city: "Abu Road",
+    lat: 24.478,
+    lon: 72.775,
+  },
+  {
+    id: "h_abu_air",
+    name: "Maharana Pratap Airport Udaipur",
+    type: "airport",
+    city: "Udaipur",
+    lat: 24.6177,
+    lon: 73.8961,
+  },
+  {
+    id: "h_abu_bus",
+    name: "Abu Road Bus Stand",
+    type: "bus",
+    city: "Abu Road",
+    lat: 24.475,
+    lon: 72.772,
+  },
+
+  // Kota
+  {
+    id: "h_kt_rail",
+    name: "Kota Junction Railway Station",
+    type: "railway",
+    city: "Kota",
+    lat: 25.2185,
+    lon: 75.866,
+  },
+  {
+    id: "h_kt_air",
+    name: "Kota Airport",
+    type: "airport",
+    city: "Kota",
+    lat: 25.16,
+    lon: 75.85,
+  },
+  {
+    id: "h_kt_bus",
+    name: "Kota Bus Stand",
+    type: "bus",
+    city: "Kota",
+    lat: 25.18,
+    lon: 75.84,
+  },
+
+  // Sawai Madhopur (Ranthambore)
+  {
+    id: "h_sm_rail",
+    name: "Sawai Madhopur Junction",
+    type: "railway",
+    city: "Sawai Madhopur",
+    lat: 25.998,
+    lon: 76.354,
+  },
+  {
+    id: "h_sm_air",
+    name: "Jaipur International Airport",
+    type: "airport",
+    city: "Jaipur",
+    lat: 26.8242,
+    lon: 75.8122,
+  },
+  {
+    id: "h_sm_bus",
+    name: "Sawai Madhopur Bus Stand",
+    type: "bus",
+    city: "Sawai Madhopur",
+    lat: 26.01,
+    lon: 76.38,
+  },
+
+  // Alwar
+  {
+    id: "h_al_rail",
+    name: "Alwar Junction Railway Station",
+    type: "railway",
+    city: "Alwar",
+    lat: 27.565,
+    lon: 76.612,
+  },
+  {
+    id: "h_al_air",
+    name: "Indira Gandhi International Airport (DEL)",
+    type: "airport",
+    city: "Delhi",
+    lat: 28.5562,
+    lon: 77.1,
+  },
+  {
+    id: "h_al_bus",
+    name: "Alwar Bus Stand",
+    type: "bus",
+    city: "Alwar",
+    lat: 27.56,
+    lon: 76.61,
+  },
+
+  // Chittorgarh
+  {
+    id: "h_ch_rail",
+    name: "Chittorgarh Junction Railway Station",
+    type: "railway",
+    city: "Chittorgarh",
+    lat: 24.885,
+    lon: 74.625,
+  },
+  {
+    id: "h_ch_air",
+    name: "Maharana Pratap Airport Udaipur",
+    type: "airport",
+    city: "Udaipur",
+    lat: 24.6177,
+    lon: 73.8961,
+  },
+  {
+    id: "h_ch_bus",
+    name: "Chittorgarh Bus Stand",
+    type: "bus",
+    city: "Chittorgarh",
+    lat: 24.89,
+    lon: 74.63,
+  },
+
+  // Bundi
+  {
+    id: "h_bu_rail",
+    name: "Bundi Railway Station",
+    type: "railway",
+    city: "Bundi",
+    lat: 25.45,
+    lon: 75.63,
+  },
+  {
+    id: "h_bu_air",
+    name: "Kota Airport",
+    type: "airport",
+    city: "Kota",
+    lat: 25.16,
+    lon: 75.85,
+  },
+  {
+    id: "h_bu_bus",
+    name: "Bundi Bus Stand",
+    type: "bus",
+    city: "Bundi",
+    lat: 25.44,
+    lon: 75.64,
+  },
+
+  // Jhunjhunu / Shekhawati
+  {
+    id: "h_jh_rail",
+    name: "Jhunjhunu Railway Station",
+    type: "railway",
+    city: "Jhunjhunu",
+    lat: 28.125,
+    lon: 75.398,
+  },
+  {
+    id: "h_jh_air",
+    name: "Jaipur International Airport",
+    type: "airport",
+    city: "Jaipur",
+    lat: 26.8242,
+    lon: 75.8122,
+  },
+  {
+    id: "h_jh_bus",
+    name: "Jhunjhunu Bus Stand",
+    type: "bus",
+    city: "Jhunjhunu",
+    lat: 28.13,
+    lon: 75.4,
+  },
+];
+
 export default function DestinationDetailPage() {
   const { siteId } = useParams();
   const [modalOpen, setModalOpen] = useState(false);
@@ -69,55 +426,27 @@ export default function DestinationDetailPage() {
     return `${(meters / 1000).toFixed(1)} km`;
   };
 
-  // Site-specific transport list based on coordinates
-  const baseTransits = [
-    {
-      id: "rail_1",
-      name: destination.transport.nearest_railway_station,
-      type: "railway",
-      lat: lat + 0.012,
-      lon: lon + 0.015,
-    },
-    {
-      id: "air_1",
-      name:
-        destination.transport.nearest_airp ||
-        destination.transport.nearest_airport,
-      type: "airport",
-      lat: lat + 0.065,
-      lon: lon + 0.05,
-    },
-    {
-      id: "bus_1",
-      name: destination.transport.nearest_bus_station,
-      type: "bus",
-      lat: lat + 0.006,
-      lon: lon - 0.008,
-    },
-    {
-      id: "rail_2",
-      name: `${destination.city} City Junction Rail`,
-      type: "railway",
-      lat: lat - 0.014,
-      lon: lon - 0.012,
-    },
-  ];
+  // Dynamically compute real distances to all master transport hubs and sort by closest
+  const scoredTransport = MASTER_TRANSIT_HUBS.map((t) => ({
+    ...t,
+    distMeters: calculateHaversineMeters(lat, lon, t.lat, t.lon),
+  })).sort((a, b) => a.distMeters - b.distMeters);
 
-  const scoredTransport = baseTransits
-    .map((t) => ({
-      ...t,
-      distMeters: calculateHaversineMeters(lat, lon, t.lat, t.lon),
-    }))
-    .sort((a, b) => a.distMeters - b.distMeters);
+  const railwayStations = scoredTransport
+    .filter((t) => t.type === "railway")
+    .slice(0, 2);
+  const airports = scoredTransport
+    .filter((t) => t.type === "airport")
+    .slice(0, 1);
+  const busStands = scoredTransport.filter((t) => t.type === "bus").slice(0, 2);
 
-  const railwayStations = scoredTransport.filter((t) => t.type === "railway");
-  const airports = scoredTransport.filter((t) => t.type === "airport");
-  const busStands = scoredTransport.filter((t) => t.type === "bus");
+  // Combine selected nearest real hubs for mapping
+  const activeTransits = [...railwayStations, ...airports, ...busStands];
 
   // Function to auto-zoom and focus on a specific transport marker
   const focusTransportMarker = (item) => {
     if (mapInstanceRef.current && markersRef.current[item.id]) {
-      mapInstanceRef.current.flyTo([item.lat, item.lon], 16, { duration: 1.0 });
+      mapInstanceRef.current.flyTo([item.lat, item.lon], 15, { duration: 1.0 });
       markersRef.current[item.id].openPopup();
     }
   };
@@ -135,7 +464,7 @@ export default function DestinationDetailPage() {
     try {
       const map = window.L.map(mapRef.current, {
         center: [lat, lon],
-        zoom: 13,
+        zoom: 12,
         zoomControl: true,
         attributionControl: false,
       });
@@ -160,8 +489,21 @@ export default function DestinationDetailPage() {
         .addTo(map)
         .bindPopup(`<b>${siteName}</b><br>Tourist Attraction`);
 
-      // Helper to add transport markers
-      const addTransportMarker = (item, emoji, bgColor) => {
+      // Add real transport markers
+      activeTransits.forEach((item) => {
+        const emoji =
+          item.type === "railway"
+            ? "🚆"
+            : item.type === "airport"
+              ? "✈️"
+              : "🚌";
+        const bgColor =
+          item.type === "railway"
+            ? "#2C2C2B"
+            : item.type === "airport"
+              ? "#2563EB"
+              : "#059669";
+
         const icon = window.L.divIcon({
           className: "",
           html: `<div style="width: 30px; height: 30px; background: ${bgColor}; border: 2px solid #FFF; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"><span style="font-size: 13px;">${emoji}</span></div>`,
@@ -175,11 +517,7 @@ export default function DestinationDetailPage() {
           );
 
         markersRef.current[item.id] = marker;
-      };
-
-      railwayStations.forEach((st) => addTransportMarker(st, "🚆", "#2C2C2B"));
-      airports.forEach((ap) => addTransportMarker(ap, "✈️", "#2563EB"));
-      busStands.forEach((bs) => addTransportMarker(bs, "🚌", "#059669"));
+      });
 
       mapInstanceRef.current = map;
       setTimeout(() => map.invalidateSize(), 200);
@@ -194,7 +532,6 @@ export default function DestinationDetailPage() {
       }
     };
   }, [lat, lon, siteName]);
-  // -------------------------------------------------------------
 
   return (
     <div className="pb-20 space-y-12">
@@ -469,7 +806,7 @@ export default function DestinationDetailPage() {
 
         <FacilityGrid facilities={destination.facilities} />
 
-        {/* --- UPGRADED INTERACTIVE TRANSPORT & LOCATION MAP SECTION --- */}
+        {/* --- SITE-SPECIFIC ACCURATE TRANSPORT & MAP SECTION --- */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -577,10 +914,11 @@ export default function DestinationDetailPage() {
                   Railway Station 🔍
                 </strong>
                 <span className="text-slate-700 font-medium mt-0.5 block">
-                  {destination.transport.nearest_railway_station}
+                  {railwayStations[0]?.name ||
+                    destination.transport.nearest_railway_station}
                 </span>
                 <span className="text-blue-600 text-[11px] font-bold mt-1 block">
-                  ~{formatDistance(railwayStations[0]?.distMeters || 3400)} from
+                  ~{formatDistance(railwayStations[0]?.distMeters || 0)} from
                   site
                 </span>
               </div>
@@ -598,11 +936,12 @@ export default function DestinationDetailPage() {
                   Nearest Airport 🔍
                 </strong>
                 <span className="text-slate-700 font-medium mt-0.5 block">
-                  {destination.transport.nearest_airp ||
+                  {airports[0]?.name ||
+                    destination.transport.nearest_airp ||
                     destination.transport.nearest_airport}
                 </span>
                 <span className="text-blue-600 text-[11px] font-bold mt-1 block">
-                  ~{formatDistance(airports[0]?.distMeters || 14200)} from site
+                  ~{formatDistance(airports[0]?.distMeters || 0)} from site
                 </span>
               </div>
             </div>
@@ -617,10 +956,11 @@ export default function DestinationDetailPage() {
               <div>
                 <strong className="text-slate-800 block">Bus Station 🔍</strong>
                 <span className="text-slate-700 font-medium mt-0.5 block">
-                  {destination.transport.nearest_bus_station}
+                  {busStands[0]?.name ||
+                    destination.transport.nearest_bus_station}
                 </span>
                 <span className="text-blue-600 text-[11px] font-bold mt-1 block">
-                  ~{formatDistance(busStands[0]?.distMeters || 1800)} from site
+                  ~{formatDistance(busStands[0]?.distMeters || 0)} from site
                 </span>
               </div>
             </div>
@@ -680,6 +1020,7 @@ export default function DestinationDetailPage() {
         <NearbyCraftsSection
           district={destination.district || destination.city}
           destinationName={destination.site_name}
+          destinationId={destination.site_id}
         />
 
         <div className="bg-slate-900 text-slate-300 rounded-2xl p-6 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">

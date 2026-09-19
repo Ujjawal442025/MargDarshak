@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
 import { Sparkles, MapPin, Award, Clock, IndianRupee, X, Check, Navigation, Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useTripCrafts, toggleTripCraft } from '../utils/tripStore';
 
-export default function CraftDetailModal({ craft, destinationName, isOpen, onClose }) {
-  const [addedToTrip, setAddedToTrip] = useState(false);
-  const [copiedDirections, setCopiedDirections] = useState(false);
+export default function CraftDetailModal({ craft, destinationName, destinationId, isOpen, onClose }) {
+  const navigate = useNavigate();
+  const tripCrafts = useTripCrafts();
 
   if (!isOpen || !craft) return null;
 
+  const addedToTrip = tripCrafts.some((c) => c.craft_id === craft.craft_id);
+
   const handleDirections = () => {
-    setCopiedDirections(true);
-    setTimeout(() => setCopiedDirections(false), 2500);
+    if (!destinationId) return;
+    onClose();
+    navigate(`/directions/${destinationId}/${craft.craft_id}`);
   };
 
   const handleAddToTrip = () => {
-    setAddedToTrip(!addedToTrip);
+    toggleTripCraft(craft, destinationName, destinationId);
   };
 
   return (
@@ -106,10 +111,11 @@ export default function CraftDetailModal({ craft, destinationName, isOpen, onClo
         <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
           <button
             onClick={handleDirections}
+            disabled={!destinationId}
             className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition-colors"
           >
             <Navigation className="w-3.5 h-3.5 text-amber-600" />
-            <span>{copiedDirections ? 'Directions Routed!' : 'Get Directions'}</span>
+            <span>Get Directions</span>
           </button>
 
           <div className="flex items-center gap-2">

@@ -3,7 +3,7 @@ import { Sparkles, MapPin, Award, ArrowRight, Compass } from 'lucide-react';
 import { getCraftsForDistrict } from '../data/craftsData';
 import CraftDetailModal from './CraftDetailModal';
 
-export default function NearbyCraftsSection({ district, destinationName }) {
+export default function NearbyCraftsSection({ district, destinationName, destinationId }) {
   const [selectedCraft, setSelectedCraft] = useState(null);
   const crafts = getCraftsForDistrict(district);
 
@@ -103,6 +103,7 @@ export default function NearbyCraftsSection({ district, destinationName }) {
       <CraftDetailModal
         craft={selectedCraft}
         destinationName={destinationName}
+        destinationId={destinationId}
         isOpen={!!selectedCraft}
         onClose={() => setSelectedCraft(null)}
       />

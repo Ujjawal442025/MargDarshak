@@ -11,14 +11,18 @@ import {
   ArrowRight,
   AlertCircle,
   Navigation,
+  Trash2,
+  Award,
 } from "lucide-react";
 import { destinations } from "../data/destinations";
 import { generateAIItinerary } from "../services/geminiService";
 import CrowdBadge from "../components/CrowdBadge";
 import { useNavigate } from "react-router-dom";
+import { useTripCrafts, removeTripCraft, clearTripCrafts } from "../utils/tripStore";
 
 export default function ItineraryPlannerPage() {
   const navigate = useNavigate();
+  const savedCrafts = useTripCrafts();
 
   // Form State (Persisted in sessionStorage)
   const [city, setCity] = useState(
@@ -131,6 +135,7 @@ export default function ItineraryPlannerPage() {
         startTime,
         endTime,
         specialRequirements,
+        savedCrafts,
       };
 
       const result = await generateAIItinerary(preferences, destinations);
@@ -393,6 +398,84 @@ export default function ItineraryPlannerPage() {
             >
               Retry Generation
             </button>
+          </div>
+        )}
+
+        {/* Crafts the user added from destination pages */}
+        {savedCrafts.length > 0 && (
+          <div className="mb-10 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-amber-200 p-6 md:p-8">
+            <div className="flex items-center justify-between gap-3 mb-5">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-3 py-1 rounded-full">
+                  Artisan Shopping Stops
+                </span>
+                <h2 className="text-xl md:text-2xl font-black text-slate-900 mt-2">
+                  Crafts in Your Trip ({savedCrafts.length})
+                </h2>
+              </div>
+              <button
+                onClick={clearTripCrafts}
+                className="text-xs font-semibold text-slate-500 hover:text-red-600 transition"
+              >
+                Clear all
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {savedCrafts.map((craft) => (
+                <div
+                  key={craft.craft_id}
+                  className="flex gap-3 bg-amber-50/50 border border-amber-200/80 rounded-xl p-3"
+                >
+                  {craft.image && (
+                    <img
+                      src={craft.image}
+                      alt={craft.craft_name}
+                      className="w-20 h-20 object-cover rounded-lg shrink-0"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-sm text-slate-900 truncate">
+                      {craft.craft_name}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                      <MapPin className="w-3 h-3 text-amber-600" />
+                      {craft.city || craft.district}
+                    </p>
+                    <p className="text-[11px] text-slate-600 flex items-center gap-1 mt-0.5">
+                      <Clock className="w-3 h-3 text-amber-600" />
+                      Best time: {craft.best_time_to_shop}
+                    </p>
+                    {craft.added_from_site_id && (
+                      <button
+                        onClick={() =>
+                          navigate(`/directions/${craft.added_from_site_id}/${craft.craft_id}`)
+                        }
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 hover:underline"
+                      >
+                        <Navigation className="w-3 h-3" /> Directions from {craft.added_from}
+                      </button>
+                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      {craft.gi_tagged && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-800">
+                          <Award className="w-3 h-3" /> GI
+                        </span>
+                      )}
+                      <span className="text-[11px] font-semibold text-slate-700">
+                        {craft.price_range}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeTripCraft(craft.craft_id)}
+                    className="self-start p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                    aria-label={`Remove ${craft.craft_name}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
